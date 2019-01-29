@@ -21,6 +21,7 @@ class ImportCommand extends Command {
   gitParamsForTargetCommits() {
     const params = ["log", "--format=%h"];
     if (this.options.flatten) {
+      params.push("e6d0bbd206f9a469d838ffb5fc7ba5087ac2d7bb...HEAD")
       params.push("--first-parent");
     }
     return params;
@@ -76,7 +77,8 @@ class ImportCommand extends Command {
     this.targetDirRelativeToGitRoot = path.join(lernaRootRelativeToGitRoot, targetDir);
 
     if (fs.existsSync(path.resolve(this.project.rootPath, targetDir))) {
-      throw new ValidationError("EEXISTS", `Target directory already exists "${targetDir}"`);
+      this.logger.info(`Directory already exists, "${targetDir}, continuing to import`);
+      // throw new ValidationError("EEXISTS", `Target directory already exists "${targetDir}"`);
     }
 
     this.commits = this.externalExecSync("git", this.gitParamsForTargetCommits())
@@ -114,7 +116,7 @@ class ImportCommand extends Command {
   }
 
   getPackageDirectories() {
-    return this.project.packageConfigs.filter(p => p.endsWith("*")).map(p => path.dirname(p));
+    return this.project.packageConfigs.filter(p => path.basename(p) === "*").map(p => path.dirname(p));
   }
 
   getTargetBase() {
@@ -234,8 +236,8 @@ class ImportCommand extends Command {
         this.logger.error("import", `Rolling back to previous HEAD (commit ${this.preImportHead})`);
 
         // Abort the failed `git am` and roll back to previous HEAD.
-        ChildProcessUtilities.execSync("git", ["am", "--abort"], this.execOpts);
-        ChildProcessUtilities.execSync("git", ["reset", "--hard", this.preImportHead], this.execOpts);
+        // ChildProcessUtilities.execSync("git", ["am", "--abort"], this.execOpts);
+        // ChildProcessUtilities.execSync("git", ["reset", "--hard", this.preImportHead], this.execOpts);
 
         throw new ValidationError(
           "EIMPORT",
